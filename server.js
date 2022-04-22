@@ -59,7 +59,7 @@ app.use((req, res, next) => {
     }
     const stmt = db.prepare(`INSERT INTO accesslog (remoteaddr, remoteuser, time, 
         method, url, protocol, httpversion, status, referer, useragent) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`)
 
     const info = stmt.run(logdata.remoteaddr, logdata.remoteuser, logdata.time,
         logdata.method, logdata.url, logdata.protocol,
