@@ -1,13 +1,13 @@
 import minimist from "minimist";
 import express from "express";
-import { coinFlip, coinFlips, countFlips, flipACoin } from './coin.mjs'
 import fs from 'fs';
 import morgan from 'morgan';
+import {db} from './database.js';
+import { coinFlip, coinFlips, countFlips, flipACoin } from './coin.mjs';
 
 const app = express()
 
-const coin = require('./coin.mjs')
-const db = require("./database.js")
+
 // Make Express use its own built-in body parser for both urlencoded and JSON body data.
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -18,7 +18,7 @@ const debug = args.debug || false;
 const log = args.log || true;
 
 //help message
-if (allArguments['help']) {
+if (args.help || args.h) {
     console.log(`server.js [options]
     --port	Set the port number for the server to listen on. Must be an integer
                 between 1 and 65535.

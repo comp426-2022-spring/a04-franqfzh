@@ -13,6 +13,7 @@
   },
   "author": "franqfzh",
   "license": "GPL-3.0-or-later",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/comp426-2022-spring/a04-franqfzh/issues"
   },
