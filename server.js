@@ -35,7 +35,7 @@ if (args.help || args.h) {
 
     --help	Return this message and exit.
     `)
-    exit(EXIT_SUCCESS)
+    process.exit(0)
 }
 
 
