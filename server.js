@@ -1,49 +1,126 @@
-import minimist from "minimist";
-import express from "express";
+// import minimist from 'minimist';
+// import express from 'express';
+// import fs from 'fs';
+// import morgan from 'morgan';
+// import {db} from './database.js';
+// import { coinFlip, coinFlips, countFlips, flipACoin } from './coin.mjs';
+
+// const app = express()
+
+
+// // Make Express use its own built-in body parser for both urlencoded and JSON body data.
+// app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+
+// const args = minimist(process.argv.slice(2));
+// const port = args.port || process.env.PORT || 5555;
+// const debug = args.debug || false;
+// const log = args.log || true;
+
+// console.log(args)
+// //help message
+// if (args.help || args.h) {
+//     console.log(`
+//     server.js [options]
+//     --port	Set the port number for the server to listen on. Must be an integer
+//                 between 1 and 65535.
+
+//     --debug	If set to true, creates endlpoints /app/log/access/ which returns
+//                 a JSON access log from the database and /app/error which throws 
+//                 an error with the message "Error test successful." Defaults to 
+//                 false.
+
+//     --log		If set to false, no log files are written. Defaults to true.
+//                 Logs are always written to database.
+
+//     --help	Return this message and exit.
+//     `)
+//     exit(EXIT_SUCCESS)
+// }
+
+
+// const server = app.listen(port, () => {
+//     console.log('App is running on port %PORT%'.replace('%PORT%', port));
+// })
+
+// // Logging middleware
+// app.use((req, res, next) => {
+//     let logdata = {
+//         remoteaddr: req.ip,
+//         remoteuser: req.user,
+//         time: Date.now(),
+//         method: req.method,
+//         url: req.url,
+//         protocol: req.protocol,
+//         httpversion: req.httpVersion,
+//         status: res.statusCode,
+//         referer: req.headers['referer'],
+//         useragent: req.headers['user-agent']
+//     }
+//     const stmt = db.prepare(`INSERT INTO accesslogs (remoteaddr, remoteuser, time, 
+//         method, url, protocol, httpversion, secure, status, referer, useragent) 
+//         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`)
+
+//     const info = stmt.run(logdata.remoteaddr, logdata.remoteuser, logdata.time,
+//         logdata.method, logdata.url, logdata.protocol,
+//         logdata.httpversion, logdata.secure, logdata.status,
+//         logdata.referer, logdata.useragent)
+//     next()
+
+// })
+
+// if(debug) {
+//     app.get('/app/log/access', (req, res) => {
+//         const stmt = db.prepare('SELECT * FROM accesslog').all();
+//         res.status(200).json(stmt);
+//     });
+
+//     app.get('/app/error', (req, res, next) => {
+//         throw new Error('Error test successful');
+//     });
+// }
+
+// if (log !== 'false') {
+//     const accesslog = fs.createWriteStream('access.log', { flags: 'a' })
+//     app.use(morgan('combined', { stream: accesslog }))
+// }
+// Require minimist module
+import minimist from 'minimist';
+const args = minimist(process.argv.slice(2))
+// See what is stored in the object produced by minimist
+console.log(args)
+// Store help text 
+const help = (`
+server.js [options]
+--port	Set the port number for the server to listen on. Must be an integer
+            between 1 and 65535.
+--debug	If set to true, creates endlpoints /app/log/access/ which returns
+            a JSON access log from the database and /app/error which throws 
+            an error with the message "Error test successful." Defaults to 
+            false.
+--log		If set to false, no log files are written. Defaults to true.
+            Logs are always written to database.
+--help	Return this message and exit.
+`)
+// If --help or -h, echo help text to STDOUT and exit
+if (args.help || args.h) {
+    console.log(help)
+    process.exit(0)
+}
+
+import express from 'express';
+import { coinFlip, coinFlips, countFlips, flipACoin } from './coin.mjs';
+import { db } from './database.js';
 import fs from 'fs';
 import morgan from 'morgan';
-import {db} from './database.js';
-import { coinFlip, coinFlips, countFlips, flipACoin } from './coin.mjs';
 
-const app = express()
-
-
-// Make Express use its own built-in body parser for both urlencoded and JSON body data.
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-const args = minimist(process.argv.slice(2));
-const port = args.port || process.env.PORT || 5555;
+const HTTP_PORT = args.port || 5555;
 const debug = args.debug || false;
 const log = args.log || true;
 
-//help message
-if (args.help || args.h) {
-    console.log(`
-    server.js [options]
-    --port	Set the port number for the server to listen on. Must be an integer
-                between 1 and 65535.
+const app = express();
 
-    --debug	If set to true, creates endlpoints /app/log/access/ which returns
-                a JSON access log from the database and /app/error which throws 
-                an error with the message "Error test successful." Defaults to 
-                false.
-
-    --log		If set to false, no log files are written. Defaults to true.
-                Logs are always written to database.
-                
-    --help	Return this message and exit.
-    `)
-    exit(EXIT_SUCCESS)
-}
-
-
-const server = app.listen(port, () => {
-    console.log('App is running on port %PORT%'.replace('%PORT%', port));
-})
-
-// Logging middleware
-app.use((req, res, next) => {
+const logger = function(req, res, next) {
     let logdata = {
         remoteaddr: req.ip,
         remoteuser: req.user,
@@ -56,34 +133,31 @@ app.use((req, res, next) => {
         referer: req.headers['referer'],
         useragent: req.headers['user-agent']
     }
-    const stmt = db.prepare(`INSERT INTO accesslogs (remoteaddr, remoteuser, time, 
-        method, url, protocol, httpversion, secure, status, referer, useragent) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`)
+    const stmt = db.prepare('INSERT INTO accesslog (remoteaddr, remoteuser, time, method, url, protocol, httpversion, status, referer, useragent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const x = stmt.run(logdata.remoteaddr, logdata.remoteuser, logdata.time, logdata.method, logdata.url, logdata.protocol, logdata.httpversion, logdata.status, logdata.referer, logdata.useragent);
+    next();
+}
 
-    const info = stmt.run(logdata.remoteaddr, logdata.remoteuser, logdata.time,
-        logdata.method, logdata.url, logdata.protocol,
-        logdata.httpversion, logdata.secure, logdata.status,
-        logdata.referer, logdata.useragent)
-    next()
+app.use(logger);
 
-})
-
-if(debug) {
+if (debug) {
     app.get('/app/log/access', (req, res) => {
         const stmt = db.prepare('SELECT * FROM accesslog').all();
         res.status(200).json(stmt);
     });
 
     app.get('/app/error', (req, res, next) => {
-        throw new Error('Error test successful');
+        throw new Error('Error Test Successful');
     });
 }
 
 if (log !== 'false') {
+    // Use morgan for logging to files
+    // Create a write stream to append (flags: 'a') to a file
     const accesslog = fs.createWriteStream('access.log', { flags: 'a' })
+    // Set up the access logging middleware
     app.use(morgan('combined', { stream: accesslog }))
 }
-
 
 app.get('/app/flip', (req, res) => {
     var flip = coinFlip()
